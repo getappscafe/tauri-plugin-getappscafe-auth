@@ -1,0 +1,6 @@
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-get_hardware_id"
+description = "Allows the get_hardware_id command without prearguments."
+commands.allow = ["get_hardware_id"]

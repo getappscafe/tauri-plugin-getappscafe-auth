@@ -1,0 +1,6 @@
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "deny-get_grace_state"
+description = "Denies the get_grace_state command without prearguments."
+commands.deny = ["get_grace_state"]

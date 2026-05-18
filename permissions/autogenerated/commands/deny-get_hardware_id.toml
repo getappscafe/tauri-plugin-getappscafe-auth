@@ -1,0 +1,6 @@
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "deny-get_hardware_id"
+description = "Denies the get_hardware_id command without prearguments."
+commands.deny = ["get_hardware_id"]

@@ -1,0 +1,6 @@
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-open_activation_url"
+description = "Allows the open_activation_url command without prearguments."
+commands.allow = ["open_activation_url"]

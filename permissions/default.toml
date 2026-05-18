@@ -1,0 +1,26 @@
+"$schema" = "schemas/schema.json"
+
+# Default permission set granted by `tauri-plugin-getappscafe-auth`.
+# Apps just need `"getappscafe-auth:default"` in their capability file.
+[default]
+description = """
+Allows the full getapps.cafe activation flow:
+- read hardware id / platform info
+- start an activation and poll for its completion
+- call /whoami with a bearer token
+- read/write/remove the shared device token in the OS keychain
+- read or initialize the grace-period state
+- open the activation URL in the user's default browser
+"""
+permissions = [
+    "allow-get_hardware_id",
+    "allow-get_platform_info",
+    "allow-init_activation",
+    "allow-poll_activation",
+    "allow-whoami",
+    "allow-shared_token_get",
+    "allow-shared_token_set",
+    "allow-shared_token_remove",
+    "allow-get_grace_state",
+    "allow-open_activation_url",
+]

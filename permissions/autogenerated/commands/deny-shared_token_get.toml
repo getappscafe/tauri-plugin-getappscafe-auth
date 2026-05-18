@@ -1,0 +1,6 @@
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "deny-shared_token_get"
+description = "Denies the shared_token_get command without prearguments."
+commands.deny = ["shared_token_get"]

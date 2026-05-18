@@ -1,0 +1,6 @@
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-shared_token_set"
+description = "Allows the shared_token_set command without prearguments."
+commands.allow = ["shared_token_set"]

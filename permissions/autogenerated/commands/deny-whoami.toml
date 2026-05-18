@@ -1,0 +1,6 @@
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "deny-whoami"
+description = "Denies the whoami command without prearguments."
+commands.deny = ["whoami"]

@@ -1,0 +1,6 @@
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-get_platform_info"
+description = "Allows the get_platform_info command without prearguments."
+commands.allow = ["get_platform_info"]
