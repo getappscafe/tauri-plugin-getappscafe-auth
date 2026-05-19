@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-shared-token-set"
+description = "Enables the shared_token_set command without any pre-configured scope."
+commands.allow = ["shared_token_set"]
+
+[[permission]]
+identifier = "deny-shared-token-set"
+description = "Denies the shared_token_set command without any pre-configured scope."
+commands.deny = ["shared_token_set"]

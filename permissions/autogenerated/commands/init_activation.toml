@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-init-activation"
+description = "Enables the init_activation command without any pre-configured scope."
+commands.allow = ["init_activation"]
+
+[[permission]]
+identifier = "deny-init-activation"
+description = "Denies the init_activation command without any pre-configured scope."
+commands.deny = ["init_activation"]
