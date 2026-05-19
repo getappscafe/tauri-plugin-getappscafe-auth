@@ -16,6 +16,8 @@ mod error;
 mod http;
 mod models;
 mod storage;
+#[cfg(target_os = "macos")]
+mod storage_macos;
 
 pub use error::{Error, Result};
 

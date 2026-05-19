@@ -6,6 +6,7 @@ pub enum Error {
     Http(#[from] reqwest::Error),
     #[error("server returned HTTP {status}: {body}")]
     BadStatus { status: u16, body: String },
+    #[cfg(not(target_os = "macos"))]
     #[error("keyring error: {0}")]
     Keyring(#[from] keyring::Error),
     #[error("machine-id error: {0}")]

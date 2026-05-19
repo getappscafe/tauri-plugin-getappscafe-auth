@@ -106,21 +106,26 @@ If your Tauri app's frontend is plain HTML + JS (no Vite/Webpack/etc.), the bare
 
 The plugin stores the device token in the **OS-level shared credential store**:
 
-- macOS: Keychain (item `cafe.getapps.device` / account `device_token`).
-- Windows: Credential Manager (same key — Windows scopes per-user, not per-app).
+- macOS: Keychain via Security.framework, pinned to access group `VFYA7T675R.cafe.getapps.shared` in the **DataProtectionKeychain** (item `cafe.getapps.device` / account `device_token`).
+- Windows: Credential Manager (Windows scopes per-user, not per-app).
 - Linux: libsecret schema `cafe.getapps.device`.
 
-For apps on macOS to actually share the entry, they must be **signed with the same Apple Team ID** and declare a common access group in their entitlements:
+### macOS requirements (mandatory — otherwise you get the "enter your Keychain password" dialog)
 
-`src-tauri/Info.plist` (or `tauri.conf.json > bundle.macOS.entitlements`):
-```xml
-<key>keychain-access-groups</key>
-<array>
-  <string>$(AppIdentifierPrefix)cafe.getapps.shared</string>
-</array>
-```
+1. Every host app must be **code-signed with Apple Team ID `VFYA7T675R`**. The plugin hardcodes this Team ID; forks/3rd-party use would need to fork and change `ACCESS_GROUP` in `src/storage_macos.rs`.
+2. Every host app must declare the shared access group in its entitlements. With Tauri, put this in `src-tauri/Entitlements.plist` (or the file referenced by `tauri.conf.json > bundle.macOS.entitlements`):
+   ```xml
+   <key>keychain-access-groups</key>
+   <array>
+     <string>$(AppIdentifierPrefix)cafe.getapps.shared</string>
+   </array>
+   ```
+   At code-sign time `$(AppIdentifierPrefix)` expands to `VFYA7T675R.`, giving the full group `VFYA7T675R.cafe.getapps.shared` that the plugin writes to.
+3. Unsigned / ad-hoc-signed builds (the default `cargo tauri dev` output) **cannot** join an access group. You'll see the OS password dialog when a second app tries to read app 1's token. This is expected in development; once both apps ship signed with the same Team ID + entitlement, the dialog goes away.
 
 After activating app A, install app B from the same publisher — it reads the same token, calls `/whoami`, and boots straight into the authenticated state. No browser, no second activation, no extra license slot used (the server unique-keys on `hardware_id`).
+
+> **Upgrading from earlier plugin versions**: the macOS backend was switched from the legacy file keychain to DataProtectionKeychain with a shared access group. Existing tokens are not migrated — users will re-activate once on next launch.
 
 ## API
 
