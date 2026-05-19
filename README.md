@@ -63,6 +63,33 @@ setupAuth({
 
 That's it. The plugin auto-mounts its UI into `document.body`. Open the app — you'll see the floating user button bottom-right.
 
+### Vanilla JS (no bundler)
+
+If your Tauri app's frontend is plain HTML + JS (no Vite/Webpack/etc.), the bare specifier `@getapps/tauri-plugin-auth` can't be resolved by the browser. Two things to set up:
+
+1. Enable the global Tauri object in `src-tauri/tauri.conf.json`:
+   ```json
+   {
+     "app": {
+       "withGlobalTauri": true
+     }
+   }
+   ```
+   The plugin will pick up `window.__TAURI__.core.invoke` automatically — no `@tauri-apps/api` import needed.
+
+2. Import the plugin from its actual file path:
+   ```html
+   <script type="module">
+     import { setupAuth } from './node_modules/@getapps/tauri-plugin-auth/guest-js/index.js';
+
+     setupAuth({
+       apiUrl: 'https://getapps.cafe',
+       appName: 'ClipShelf',
+     });
+   </script>
+   ```
+   (Or copy `guest-js/` into your `src/` and import from there.)
+
 ## How it behaves
 
 | Situation | Plugin UI | Host app usable? |

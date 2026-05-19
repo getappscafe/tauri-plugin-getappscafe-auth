@@ -5,7 +5,14 @@
 // care of everything via setupAuth(...), or use the lower-level functions
 // (getSharedToken, startActivation, ...) and render its own UI.
 
-import { invoke } from '@tauri-apps/api/core';
+// Resolve `invoke` at runtime so this module loads without a bundler.
+// - Vanilla-JS Tauri apps set `app.withGlobalTauri = true` and get
+//   `window.__TAURI__.core.invoke` — no bare-specifier import needed.
+// - Bundled apps (Vite/Webpack/...) fall through to the dynamic import,
+//   which the bundler resolves statically.
+const invoke = (typeof window !== 'undefined' && window.__TAURI__?.core?.invoke)
+  ? window.__TAURI__.core.invoke
+  : (await import('@tauri-apps/api/core')).invoke;
 
 const PLUGIN = 'plugin:getappscafe-auth';
 
