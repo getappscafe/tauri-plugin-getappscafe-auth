@@ -89,7 +89,6 @@ class Auth {
           onInfoClose: () => this.hideInfo(),
           onInfoRecheck: () => this.refresh(),
           onInfoSignOut: () => this.signOut(),
-          onInfoCopyHardwareId: () => this.copyHardwareId(),
           onInfoOpenAccount: () => this.openAccountUrl(),
         });
         this.ui.mount();
@@ -193,10 +192,6 @@ class Auth {
         document.body.appendChild(ta); ta.select();
         document.execCommand('copy');
         document.body.removeChild(ta);
-      }
-      if (this.ui && this.infoOpen) {
-        this.infoData = { ...(this.infoData || {}), copiedAt: Date.now() };
-        this.ui.renderInfo(this.state, this.infoData);
       }
       return true;
     } catch {

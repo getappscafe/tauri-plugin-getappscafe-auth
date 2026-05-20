@@ -168,7 +168,19 @@ export const CSS = `
   margin-bottom: 18px;
   max-height: 60vh;
   overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(43, 24, 16, 0.25) transparent;
 }
+.gac-info-grid::-webkit-scrollbar { width: 8px; }
+.gac-info-grid::-webkit-scrollbar-track { background: transparent; }
+.gac-info-grid::-webkit-scrollbar-thumb {
+  background: rgba(43, 24, 16, 0.18);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.gac-info-grid::-webkit-scrollbar-thumb:hover { background: rgba(43, 24, 16, 0.32); background-clip: padding-box; }
 .gac-info-section {
   font-size: 11px;
   font-weight: 600;

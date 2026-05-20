@@ -19,7 +19,6 @@ export class AuthUI {
    * @param {() => void} [opts.onInfoClose]
    * @param {() => void} [opts.onInfoRecheck]
    * @param {() => void} [opts.onInfoSignOut]
-   * @param {() => void} [opts.onInfoCopyHardwareId]
    * @param {() => void} [opts.onInfoOpenAccount]
    */
   constructor(opts) {
@@ -144,7 +143,7 @@ export class AuthUI {
   /**
    * Render (or hide) the hidden info modal. Pass `state = null` to close.
    * @param {object|null} state
-   * @param {object|null} infoData { hardwareId, platform, token, copiedAt }
+   * @param {object|null} infoData { hardwareId, platform, token }
    */
   renderInfo(state, infoData) {
     if (!this.infoHost) this.mount();
@@ -162,7 +161,6 @@ export class AuthUI {
     const platformName = infoData?.platform?.name || device?.platform || '—';
     const hostname = infoData?.platform?.hostname || '—';
     const hardwareId = infoData?.hardwareId || device?.hardware_id || '—';
-    const justCopied = infoData?.copiedAt && (Date.now() - infoData.copiedAt < 2000);
     const tokenLine = infoData?.token
       ? `${infoData.token.slice(0, 6)}…${infoData.token.slice(-4)} (${infoData.token.length} chars)`
       : '— (not signed in)';
@@ -193,9 +191,11 @@ export class AuthUI {
             ${row('Hardware ID', `<code class="gac-info-mono">${escapeHtml(hardwareId)}</code>`)}
             ${row('Platform', escapeHtml(platformName))}
             ${row('Device ID', device?.id != null ? String(device.id) : '—')}
-            ${section('Grace')}
-            ${row('Grace expires', formatTime(state.graceExpiresAt))}
-            ${row('Remaining', escapeHtml(graceRemaining))}
+            ${state.phase !== 'authenticated' ? `
+              ${section('Trial')}
+              ${row('Time remaining', escapeHtml(graceRemaining))}
+              ${row('Trial expires', formatTime(state.graceExpiresAt))}
+            ` : ''}
             ${section('Token')}
             ${row('Stored', escapeHtml(tokenLine))}
             ${license?.message ? section('License message') + `<div class="gac-info-msg">${escapeHtml(license.message)}</div>` : ''}
@@ -203,9 +203,6 @@ export class AuthUI {
           </div>
           <div class="gac-actions gac-info-actions">
             <button class="gac-btn" type="button" id="gac-info-recheck">Re-check now</button>
-            <button class="gac-btn gac-btn-ghost" type="button" id="gac-info-copy">
-              ${justCopied ? 'Copied!' : 'Copy hardware ID'}
-            </button>
             <button class="gac-btn gac-btn-ghost" type="button" id="gac-info-account">Open account page</button>
             <button class="gac-btn gac-btn-ghost" type="button" id="gac-info-signout">Sign out</button>
           </div>
@@ -220,7 +217,6 @@ export class AuthUI {
     };
     bind('gac-info-x', this.opts.onInfoClose);
     bind('gac-info-recheck', this.opts.onInfoRecheck);
-    bind('gac-info-copy', this.opts.onInfoCopyHardwareId);
     bind('gac-info-account', this.opts.onInfoOpenAccount);
     bind('gac-info-signout', this.opts.onInfoSignOut);
 
