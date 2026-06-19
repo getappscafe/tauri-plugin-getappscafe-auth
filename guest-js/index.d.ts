@@ -94,7 +94,7 @@ export interface SetupOptions {
   colors?: AuthColors;
   /**
    * Hidden shortcut that opens a read-only info modal showing the current
-   * user / device / plan / grace state. Defaults to 'Mod+Shift+Alt+A'
+   * user / device / plan / grace state. Defaults to 'Mod+Shift+J'
    * (Cmd on macOS, Ctrl elsewhere). Pass `null` to disable, or a custom
    * KeyboardEvent matcher.
    */

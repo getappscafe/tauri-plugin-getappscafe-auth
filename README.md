@@ -5,8 +5,9 @@ Drop-in device activation + license UI for Tauri 2 apps shipped through [getapps
 - Activation flow (`init` → open browser → poll → store token).
 - Shared OS keychain entry so multiple apps on the same machine **reuse one license slot**.
 - 1-day grace period for fresh installs: user can use the app immediately; sign-in is enforced after the grace window.
-- Floating sign-in button (bottom-right) while in grace; full-screen overlay once locked.
-- Automatic `whoami` re-check every 30 min - handles "license moved to another device" and "subscription lapsed" without any code in the host app.
+- Floating sign-in button (blue accent, bottom-right) while in grace; full-screen overlay once locked.
+- Boot-time `whoami` check with a cached snapshot fallback - launches stay fast and survive transient network failures (no periodic polling; `auth.refresh()` for an on-demand re-check).
+- Hidden info modal (Cmd/Ctrl+Shift+J) for support: user, device, plan, grace, masked token, "Re-check now / Copy hardware ID / Sign out".
 
 > Backend reference (server-side activation routes, web account UI, billing): see the [getapps.cafe repo](https://github.com/mrleepng/getappscafe).
 
@@ -97,13 +98,13 @@ If your Tauri app's frontend is plain HTML + JS (no Vite/Webpack/etc.), the bare
 
 | Situation | Plugin UI | Host app usable? |
 |---|---|---|
-| First boot, no token | Floating user button | ✅ yes, for 24h |
-| Floating button clicked | Full overlay with code + "Re-open activation page". Browser opens at `/activate?code=…` | ❌ blocked while overlaying - user dismiss-able if still in grace |
+| First boot, no token | Floating user button (blue, bottom-right) | ✅ yes, for 24h |
+| Floating button clicked | Full overlay with activation code + "Re-open sign-in page". Browser auto-opens `/activate?code=…` via Rust `open` (works inside Tauri webview) | ❌ blocked while overlaying - user dismiss-able if still in grace |
 | 24h passed, still no token | Full overlay: "Sign in to continue" | ❌ blocked, no dismiss |
-| Has token, `/whoami` OK | Nothing | ✅ yes |
-| Has token, `/whoami` 401 (revoked) | Returns to grace logic above | depends on grace |
-| Has token, `/whoami` 402 (license expired) | Full overlay: "Trial ended" / "Subscription lapsed" with "Upgrade" | ❌ blocked |
-| Has token, network down at boot | Nothing (treated as authenticated, `state.offline = true`); re-verifies on next tick or `online` event | ✅ yes |
+| Has token, boot `/whoami` OK | Nothing | ✅ yes |
+| Has token, boot `/whoami` 401 (revoked) | Returns to grace logic above | depends on grace |
+| Has token, boot `/whoami` 402 (license expired) | Full overlay: "Trial ended" / "Subscription lapsed" with "Upgrade" | ❌ blocked |
+| Has token, network down at boot | Nothing - session restored from cached whoami snapshot with `state.offline = true` + `lastCheckedAt`; cleared on next successful `auth.refresh()` | ✅ yes |
 | No token, network down at boot, grace expired | Falls through to locked overlay | ❌ blocked |
 
 ## Sharing the license across multiple apps
@@ -142,14 +143,16 @@ After activating app A, install app B from the same publisher - it reads the sam
 | `graceMs` | `86400000` (24h) | How long after first boot the app stays usable without sign-in. |
 | `pollIntervalMs` | `2500` | Activation poll cadence. |
 | `pollTimeoutMs` | `600000` (10m) | Give up on the activation request after this. |
-| `whoamiInterval` | `1800000` (30m) | Periodic license re-check after sign-in. |
 | `mountUi` | `true` | Set to `false` if you want to render your own UI and just consume `state`. |
-| `onChange(state)` | - | Callback on every state change. |
+| `onChange(state)` | - | Callback on every state change. Equivalent to `auth.subscribe(fn)` but inline at setup. |
 | `upgradeUrl` | derived | Where the "Upgrade" button opens. Defaults to `${apiUrl}/account#/billing`. |
 | `deviceName` | hostname or appName | Sent to the server on `init` so it shows up in `/account`. |
-| `infoShortcut` | `'Mod+Shift+Alt+A'` | Hidden shortcut that opens a read-only info modal (user / device / plan / grace). `'Mod'` is Cmd on macOS, Ctrl elsewhere. Set to `null` to disable, or pass a `(KeyboardEvent) => boolean` matcher. |
+| `colors` | - | CSS-var overrides for the bundled UI. See the [theming section](#theming-the-ui). Any valid CSS color/length value works (`#rgb`, `rgb()`, `color-mix(...)`, `12px`, ...). |
+| `infoShortcut` | `'Mod+Shift+J'` | Hidden shortcut that opens a read-only info modal (user / device / plan / grace). `'Mod'` = Cmd on macOS, Ctrl elsewhere. Set to `null` to disable, or pass a `(KeyboardEvent) => boolean` matcher. |
 | `right` | `20` | Floating sign-in button offset from the right edge. Number = px, string = any CSS length (e.g. `'1rem'`, `'calc(20px + env(safe-area-inset-right))'`). |
 | `bottom` | `20` | Floating sign-in button offset from the bottom edge. Same semantics as `right`. |
+
+> No periodic `whoami` re-check: the plugin verifies the license once at boot, then trusts the cached snapshot for the rest of the session. Call `auth.refresh()` if you want an on-demand re-check (the info modal exposes this as "Re-check now").
 
 ### `Auth` instance
 
