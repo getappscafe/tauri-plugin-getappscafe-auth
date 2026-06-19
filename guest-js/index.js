@@ -87,6 +87,10 @@ class Auth {
           fabRight: opts.right,
           fabBottom: opts.bottom,
           onSignInClick: () => this.startActivation(),
+          onReopenActivationUrl: () => {
+            const url = this.state.activation?.url;
+            if (url) openActivationUrl(url).catch(() => {});
+          },
           onCancelActivation: () => this.cancelActivation(),
           onUpgradeClick: () => this.openUpgradeUrl(),
           onInfoClose: () => this.hideInfo(),

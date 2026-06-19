@@ -28,9 +28,7 @@ export const CSS = `
   -webkit-font-smoothing: antialiased;
 }
 
-/* ----- floating action button (grace mode) -----
-   White card with accent icon: feels closer to a macOS toolbar button than a
-   coloured Material-style FAB. */
+/* ----- floating action button (grace mode) ----- */
 .gac-fab {
   position: fixed;
   bottom: 20px;
@@ -38,9 +36,9 @@ export const CSS = `
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--gac-card);
-  color: var(--gac-accent);
-  border: 1px solid var(--gac-line-strong);
+  background: var(--gac-accent);
+  color: #fff;
+  border: 1px solid var(--gac-accent);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -49,7 +47,7 @@ export const CSS = `
   z-index: var(--gac-z);
   transition: background 0.12s, border-color 0.12s, transform 0.12s;
 }
-.gac-fab:hover  { background: var(--gac-bg); border-color: color-mix(in srgb, var(--gac-accent) 35%, var(--gac-line-strong)); }
+.gac-fab:hover  { background: color-mix(in srgb, var(--gac-accent) 88%, #000); border-color: color-mix(in srgb, var(--gac-accent) 88%, #000); }
 .gac-fab:active { transform: scale(0.97); }
 .gac-fab svg {
   width: 18px; height: 18px;

@@ -33,6 +33,7 @@ export class AuthUI {
    * @param {number|string} [opts.fabRight]
    * @param {number|string} [opts.fabBottom]
    * @param {() => void} opts.onSignInClick
+   * @param {() => void} opts.onReopenActivationUrl
    * @param {() => void} opts.onCancelActivation
    * @param {() => void} opts.onUpgradeClick
    * @param {() => void} [opts.onInfoClose]
@@ -143,7 +144,7 @@ export class AuthUI {
             <div class="gac-error" id="gac-err">${escapeHtml(state.error || '')}</div>
             <div class="gac-actions">
               ${dismissible ? '<button class="gac-btn gac-btn-ghost" type="button" id="gac-cancel">Cancel</button>' : ''}
-              ${url ? `<a class="gac-btn" href="${escapeAttr(url)}" target="_blank" rel="noopener">Re-open sign-in page</a>` : ''}
+              ${url ? '<button class="gac-btn" type="button" id="gac-reopen">Re-open sign-in page</button>' : ''}
             </div>
           </div>
         </div>
@@ -152,6 +153,8 @@ export class AuthUI {
         const cancelEl = this.host.querySelector('#gac-cancel');
         if (cancelEl) cancelEl.onclick = () => this.opts.onCancelActivation();
       }
+      const reopenEl = this.host.querySelector('#gac-reopen');
+      if (reopenEl) reopenEl.onclick = () => this.opts.onReopenActivationUrl?.();
       return;
     }
     if (phase === 'license_expired') {
