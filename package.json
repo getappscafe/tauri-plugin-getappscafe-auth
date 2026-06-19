@@ -1,8 +1,8 @@
 {
   "name": "@getapps/tauri-plugin-auth",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Drop-in device activation + license UI for Tauri apps shipped through getapps.cafe.",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "main": "./guest-js/index.js",
   "module": "./guest-js/index.js",
