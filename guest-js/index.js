@@ -77,6 +77,13 @@ class Auth {
     this.infoOpen = false;
     this.infoData = null;
     this._keyHandler = null;
+    // Bumped by cancelActivation / signOut / startActivation. Each polling
+    // tick captures its own generation and aborts (rolling back any token it
+    // may have written) if it doesn't match by the time it resolves. Without
+    // this, an in-flight `pollActivation` that resolves with `completed` AFTER
+    // the user cancelled can still call setSharedToken + applyWhoami and flip
+    // the state back to authenticated.
+    this.activationGen = 0;
 
     if (opts.mountUi) {
       // Lazy-load UI to keep headless integrations small.
@@ -158,12 +165,14 @@ class Auth {
   cancelActivation() {
     if (this.state.phase !== 'activating') return;
     if (this.state.activatingFrom !== 'grace') return; // not dismissible
+    this.activationGen++;
     this.stopPolling();
     this.activationCode = null;
     this.checkGraceAndRender();
   }
 
   async signOut() {
+    this.activationGen++;
     this.stopPolling();
     await removeSharedToken().catch(() => {});
     await removeWhoamiCache().catch(() => {});
@@ -388,9 +397,11 @@ class Auth {
     if (snap.phase === 'authenticated') {
       this.setState({
         phase: 'authenticated',
-        user: snap.user,
-        device: snap.device,
-        limit: snap.limit,
+        // Normalize to null - older caches (pre-v0.1.6) and the rare
+        // poll-completed-but-whoami-failed branch don't carry these fields.
+        user: snap.user ?? null,
+        device: snap.device ?? null,
+        limit: snap.limit ?? null,
         license: null,
         offline: true,
         lastCheckedAt: snap.checkedAt,
@@ -401,7 +412,7 @@ class Auth {
     if (snap.phase === 'license_expired') {
       this.setState({
         phase: 'license_expired',
-        license: snap.license,
+        license: snap.license ?? null,
         offline: true,
         lastCheckedAt: snap.checkedAt,
         error: '',
@@ -414,8 +425,10 @@ class Auth {
   startPolling(hardwareId) {
     this.stopPolling();
     const code = this.activationCode;
+    const myGen = ++this.activationGen;
+    const isStale = () => this.destroyed || myGen !== this.activationGen;
     const tick = async () => {
-      if (this.destroyed) return;
+      if (isStale()) return;
       if (Date.now() > this.activationDeadline) {
         this.setState({ error: 'Sign-in expired - please try again.' });
         this.stopPolling();
@@ -424,27 +437,53 @@ class Auth {
       }
       try {
         const r = await pollActivation({ apiUrl: this.opts.apiUrl, code, hardwareId });
+        if (isStale()) return; // cancel/signOut beat us
         if (r.status === 'completed' && r.device_token) {
           this.stopPolling();
           await setSharedToken(r.device_token).catch(() => {});
+          if (isStale()) {
+            // Cancel/signOut ran between pollActivation resolving and the
+            // token write completing - undo the token write.
+            await removeSharedToken().catch(() => {});
+            return;
+          }
           try {
             const w = await whoami({ apiUrl: this.opts.apiUrl, token: r.device_token });
+            if (isStale()) {
+              await removeSharedToken().catch(() => {});
+              return;
+            }
             await this.applyWhoami(w);
           } catch {
+            if (isStale()) {
+              await removeSharedToken().catch(() => {});
+              return;
+            }
             // Just activated, but whoami right after couldn't reach the
             // server. Treat as offline-authenticated *only* for this one
             // tick: we know the server just issued the token (poll returned
             // `completed`), so we trust it for the rest of this session and
-            // write a minimal cache so the next launch can restore it.
+            // write a cache so the next launch can restore it. Explicit
+            // nulls (not `undefined`) so the snapshot shape matches a real
+            // whoami cache — host code reading `state.user` won't crash on
+            // missing properties.
             // No `error` set: this race is invisible to the user, and the
             // raw exception would leak the API URL via reqwest's Display.
             const snapshot = {
               phase: 'authenticated',
+              user: null,
+              device: null,
+              limit: null,
+              license: null,
               checkedAt: Date.now(),
             };
             await setWhoamiCache(JSON.stringify(snapshot)).catch(() => {});
             this.setState({
               phase: 'authenticated',
+              user: null,
+              device: null,
+              limit: null,
+              license: null,
               offline: true,
             });
           }
@@ -460,6 +499,7 @@ class Auth {
         // from a previous failed tick now that the server is responding.
         if (this.state.offlineNote) this.setState({ offlineNote: '' });
       } catch (e) {
+        if (isStale()) return;
         // Transient network errors are OK during polling - the loop keeps
         // trying. Demote to a muted note instead of a red error so the user
         // doesn't see "TypeError: Failed to fetch" flashing every 2.5s.

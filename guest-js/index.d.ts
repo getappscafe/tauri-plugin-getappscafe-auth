@@ -39,9 +39,12 @@ export interface LicenseState {
 export interface AuthState {
   phase: Phase;
   appName: string;
-  user?: User;
-  device?: Device;
-  limit?: number;
+  // Null when the session was restored from cache after a
+  // poll-completed-but-whoami-failed race (no whoami snapshot was ever
+  // written for this token). Otherwise populated by the whoami response.
+  user?: User | null;
+  device?: Device | null;
+  limit?: number | null;
   activation?: ActivationInfo | null;
   activatingFrom?: 'grace' | 'locked';
   graceExpiresAt?: number;
