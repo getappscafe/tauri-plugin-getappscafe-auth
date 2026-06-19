@@ -165,7 +165,15 @@ export const CSS = `
   border-color: var(--gac-accent);
   color: #ffffff;
 }
-.gac-btn.gac-btn-primary:hover:not(:disabled) { filter: brightness(0.94); }
+.gac-btn.gac-btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gac-accent) 88%, #000);
+  border-color: color-mix(in srgb, var(--gac-accent) 88%, #000);
+  color: #ffffff;
+}
+.gac-btn.gac-btn-primary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--gac-accent) 78%, #000);
+  border-color: color-mix(in srgb, var(--gac-accent) 78%, #000);
+}
 
 .gac-btn.gac-btn-ghost {
   border-color: transparent;

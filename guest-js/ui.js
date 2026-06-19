@@ -167,15 +167,19 @@ export class AuthUI {
           <div class="gac-card">
             <h2>${isTrial ? 'Trial ended' : 'Subscription lapsed'}</h2>
             <p>${escapeHtml(state.license?.message || 'Renew your getapps.cafe subscription to keep using the app.')}</p>
+            <p class="gac-note">Already subscribed? Click <b>Check again</b> after completing your purchase.</p>
             ${offlineHint}
             <div class="gac-error" id="gac-err">${escapeHtml(state.error || '')}</div>
             <div class="gac-actions">
+              <button class="gac-btn" type="button" id="gac-recheck">Check again</button>
               <button class="gac-btn gac-btn-primary" type="button" id="gac-upgrade">${isTrial ? 'Upgrade' : 'Renew'}</button>
             </div>
           </div>
         </div>
       `;
       this.host.querySelector('#gac-upgrade').onclick = () => this.opts.onUpgradeClick();
+      const recheckEl = this.host.querySelector('#gac-recheck');
+      if (recheckEl) recheckEl.onclick = () => this.opts.onInfoRecheck?.();
       return;
     }
   }

@@ -209,13 +209,24 @@ class Auth {
     }
   }
 
-  // Force a fresh license check now (bypasses the periodic whoami timer).
+  // Force a fresh license check now. Used by the info modal "Re-check now"
+  // button and by the "Check again" action on the license-expired overlay
+  // (after the user subscribes/renews on the web).
   async refresh() {
     const token = await getSharedToken().catch(() => null);
-    if (token) {
-      await this.checkWhoami(token);
-    } else {
+    if (!token) {
       await this.checkGraceAndRender();
+      if (this.infoOpen) await this._loadInfoData();
+      return;
+    }
+    try {
+      const r = await whoami({ apiUrl: this.opts.apiUrl, token });
+      await this.applyWhoami(r);
+    } catch (e) {
+      const friendly = isNetworkError(e)
+        ? "Couldn't reach getapps.cafe. Check your internet and try again."
+        : errorMessage(e);
+      this.setState({ error: friendly });
     }
     if (this.infoOpen) await this._loadInfoData();
   }
