@@ -53,9 +53,13 @@ export interface AuthState {
    * session is being restored from the last successful whoami snapshot.
    * Cleared on the next launch where whoami succeeds. */
   offline?: boolean;
-  /** Wall-clock time (ms) of the cached whoami snapshot the current state was
-   * restored from. Only set when `offline === true`. */
+  /** Wall-clock time (ms) of the most recent successful whoami - whether
+   * online (just now) or offline-restored (from the cached snapshot). Use
+   * together with `offline` to show "Last verified Xs ago" hints. */
   lastCheckedAt?: number;
+  /** True while `auth.refresh()` is in flight - the UI shows a spinner on
+   * the "Check again" / "Re-check now" buttons. */
+  checking?: boolean;
   /** A friendly, non-alarming hint shown in muted text - used when the
    * connectivity problem is automatic-retry territory (boot whoami fail,
    * activation polling tick fail) so the user doesn't see raw

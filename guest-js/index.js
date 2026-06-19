@@ -219,19 +219,23 @@ class Auth {
   // button and by the "Check again" action on the license-expired overlay
   // (after the user subscribes/renews on the web).
   async refresh() {
-    const token = await getSharedToken().catch(() => null);
-    if (!token) {
-      await this.checkGraceAndRender();
-      if (this.infoOpen) await this._loadInfoData();
-      return;
-    }
+    this.setState({ checking: true });
     try {
-      const r = await whoami({ apiUrl: this.opts.apiUrl, token });
-      await this.applyWhoami(r);
-    } catch (e) {
-      this.setState({ error: friendlyError(e) });
+      const token = await getSharedToken().catch(() => null);
+      if (!token) {
+        await this.checkGraceAndRender();
+        return;
+      }
+      try {
+        const r = await whoami({ apiUrl: this.opts.apiUrl, token });
+        await this.applyWhoami(r);
+      } catch (e) {
+        this.setState({ error: friendlyError(e) });
+      }
+    } finally {
+      this.setState({ checking: false });
+      if (this.infoOpen) await this._loadInfoData();
     }
-    if (this.infoOpen) await this._loadInfoData();
   }
 
   // --- info modal ---------------------------------------------------------
@@ -351,16 +355,17 @@ class Auth {
 
   async applyWhoami(r) {
     if (r.kind === 'ok') {
+      const checkedAt = Date.now();
       const snapshot = {
         phase: 'authenticated',
         user: r.user,
         device: r.device,
         limit: r.limit,
         license: null,
-        checkedAt: Date.now(),
+        checkedAt,
       };
       await setWhoamiCache(JSON.stringify(snapshot)).catch(() => {});
-      this.setState({ ...snapshot, offline: false, error: '', offlineNote: '' });
+      this.setState({ ...snapshot, lastCheckedAt: checkedAt, offline: false, error: '', offlineNote: '' });
       return;
     }
     if (r.kind === 'unauthorized') {
@@ -372,6 +377,7 @@ class Auth {
       return;
     }
     if (r.kind === 'license_expired') {
+      const checkedAt = Date.now();
       const snapshot = {
         phase: 'license_expired',
         license: {
@@ -381,10 +387,10 @@ class Auth {
           expiresAt: r.license_expires_at,
           upgradeUrl: r.upgrade_url,
         },
-        checkedAt: Date.now(),
+        checkedAt,
       };
       await setWhoamiCache(JSON.stringify(snapshot)).catch(() => {});
-      this.setState({ ...snapshot, offline: false, offlineNote: '' });
+      this.setState({ ...snapshot, lastCheckedAt: checkedAt, offline: false, error: '', offlineNote: '' });
     }
   }
 

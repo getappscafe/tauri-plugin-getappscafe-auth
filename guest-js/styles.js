@@ -155,6 +155,7 @@ export const CSS = `
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
 .gac-btn:hover:not(:disabled) { background: var(--gac-bg); }

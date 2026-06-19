@@ -162,6 +162,10 @@ export class AuthUI {
       const offlineHint = state.offline && state.lastCheckedAt
         ? `<p class="gac-note">Last verified ${formatAgo(state.lastCheckedAt)} - you appear to be offline.</p>`
         : '';
+      const checkedHint = !state.offline && state.lastCheckedAt
+        ? `<p class="gac-note">Last checked ${formatAgo(state.lastCheckedAt)}. License is still showing as ${isTrial ? 'trial-ended' : 'lapsed'}.</p>`
+        : '';
+      const checking = !!state.checking;
       this.host.innerHTML = `
         <div class="gac-overlay" role="dialog" aria-modal="true">
           <div class="gac-card">
@@ -169,9 +173,12 @@ export class AuthUI {
             <p>${escapeHtml(state.license?.message || 'Renew your getapps.cafe subscription to keep using the app.')}</p>
             <p class="gac-note">Already subscribed? Click <b>Check again</b> after completing your purchase.</p>
             ${offlineHint}
+            ${checkedHint}
             <div class="gac-error" id="gac-err">${escapeHtml(state.error || '')}</div>
             <div class="gac-actions">
-              <button class="gac-btn" type="button" id="gac-recheck">Check again</button>
+              <button class="gac-btn" type="button" id="gac-recheck"${checking ? ' disabled' : ''}>
+                ${checking ? '<span class="gac-spinner" aria-hidden="true"></span>Checking…' : 'Check again'}
+              </button>
               <button class="gac-btn gac-btn-primary" type="button" id="gac-upgrade">${isTrial ? 'Upgrade' : 'Renew'}</button>
             </div>
           </div>
@@ -179,7 +186,7 @@ export class AuthUI {
       `;
       this.host.querySelector('#gac-upgrade').onclick = () => this.opts.onUpgradeClick();
       const recheckEl = this.host.querySelector('#gac-recheck');
-      if (recheckEl) recheckEl.onclick = () => this.opts.onInfoRecheck?.();
+      if (recheckEl && !checking) recheckEl.onclick = () => this.opts.onInfoRecheck?.();
       return;
     }
   }
