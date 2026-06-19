@@ -151,10 +151,7 @@ class Auth {
       });
       this.startPolling(hardwareId);
     } catch (e) {
-      const friendly = isNetworkError(e)
-        ? "Couldn't reach getapps.cafe. Check your internet and try again."
-        : errorMessage(e);
-      this.setState({ error: friendly, phase: previous });
+      this.setState({ error: friendlyError(e), phase: previous });
     }
   }
 
@@ -223,10 +220,7 @@ class Auth {
       const r = await whoami({ apiUrl: this.opts.apiUrl, token });
       await this.applyWhoami(r);
     } catch (e) {
-      const friendly = isNetworkError(e)
-        ? "Couldn't reach getapps.cafe. Check your internet and try again."
-        : errorMessage(e);
-      this.setState({ error: friendly });
+      this.setState({ error: friendlyError(e) });
     }
     if (this.infoOpen) await this._loadInfoData();
   }
@@ -325,7 +319,7 @@ class Auth {
           // just inform - no scary red error.
           this.setState({ offlineNote: 'You appear to be offline.' });
         } else {
-          this.setState({ error: errorMessage(e) });
+          this.setState({ error: friendlyError(e) });
         }
       }
     }
@@ -342,7 +336,7 @@ class Auth {
     } catch (e) {
       // If keyring is broken, fail-open into grace mode rather than locking
       // the user out - the host app stays usable.
-      this.setState({ phase: 'grace', error: errorMessage(e) });
+      this.setState({ phase: 'grace', error: friendlyError(e) });
     }
   }
 
@@ -469,13 +463,10 @@ class Auth {
         // Transient network errors are OK during polling - the loop keeps
         // trying. Demote to a muted note instead of a red error so the user
         // doesn't see "TypeError: Failed to fetch" flashing every 2.5s.
-        const msg = isNetworkError(e)
-          ? "You appear to be offline. We'll keep trying..."
-          : errorMessage(e);
         if (isNetworkError(e)) {
-          this.setState({ offlineNote: msg });
+          this.setState({ offlineNote: "You appear to be offline. We'll keep trying..." });
         } else {
-          this.setState({ error: msg });
+          this.setState({ error: friendlyError(e) });
         }
       }
     };
@@ -498,10 +489,36 @@ class Auth {
   }
 }
 
-function errorMessage(e) {
-  if (!e) return '';
-  if (typeof e === 'string') return e;
-  return e.message || String(e);
+// Map any caught exception into copy that's safe to show to a user.
+// Covers: offline/network, HTTP 5xx, HTTP 4xx, and unknown fallthrough.
+// Anything that doesn't match a known shape collapses to a generic message
+// rather than leaking raw `BadStatus { status, body }` / `reqwest` jargon.
+function friendlyError(e) {
+  if (isNetworkError(e)) {
+    return "Couldn't reach getapps.cafe. Check your internet and try again.";
+  }
+  const status = httpStatus(e);
+  if (status >= 500) {
+    return 'The getapps.cafe server is having trouble right now. Please try again in a moment.';
+  }
+  if (status === 429) {
+    return 'Too many requests. Please wait a moment and try again.';
+  }
+  if (status === 404) {
+    return "We couldn't find what we were looking for on the server. Try signing in again.";
+  }
+  if (status >= 400) {
+    return 'The server rejected the request. Please try again or contact support.';
+  }
+  return 'Something went wrong. Please try again.';
+}
+
+// Pull an HTTP status code out of a Rust-side `BadStatus { status, body }`
+// message that the plugin serializes as "server returned HTTP {status}: …".
+function httpStatus(e) {
+  const msg = String(e?.message || e || '');
+  const m = msg.match(/HTTP\s+(\d{3})/i);
+  return m ? Number(m[1]) : 0;
 }
 
 // Heuristic: did this exception come from "couldn't talk to the server"?
