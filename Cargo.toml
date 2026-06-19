@@ -1,8 +1,8 @@
 [package]
 name = "tauri-plugin-getappscafe-auth"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
-license = "MIT"
+license-file = "LICENSE"
 description = "Drop-in device-activation flow for Tauri apps that ship under the getapps.cafe license."
 repository = "https://github.com/3aesala/tauri-plugin-getappscafe-auth"
 readme = "README.md"
@@ -31,7 +31,7 @@ log = "0.4"
 # the *other* app's item triggers the "enter your Keychain password" dialog.
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10"
-# OSX_10_15 enables `Location::DataProtectionKeychain` — required for shared
+# OSX_10_15 enables `Location::DataProtectionKeychain` - required for shared
 # access groups; the legacy file keychain ignores `kSecAttrAccessGroup`.
 security-framework = { version = "3", features = ["OSX_10_15"] }
 security-framework-sys = { version = "2", features = ["OSX_10_15"] }

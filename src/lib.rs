@@ -23,7 +23,7 @@ pub use error::{Error, Result};
 
 const PLUGIN_NAME: &str = "getappscafe-auth";
 
-/// Default plugin init. No configuration needed — JS side passes API URL etc.
+/// Default plugin init. No configuration needed - JS side passes API URL etc.
 /// per call.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     PluginBuilder::new(PLUGIN_NAME)
@@ -36,6 +36,9 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::shared_token_get,
             commands::shared_token_set,
             commands::shared_token_remove,
+            commands::whoami_cache_get,
+            commands::whoami_cache_set,
+            commands::whoami_cache_remove,
             commands::get_grace_state,
             commands::open_activation_url,
         ])

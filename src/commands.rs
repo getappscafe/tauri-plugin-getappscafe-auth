@@ -1,4 +1,4 @@
-// JS-facing commands. The plugin is intentionally stateless on the Rust side —
+// JS-facing commands. The plugin is intentionally stateless on the Rust side -
 // every call passes `api_url` so apps can switch dev/prod without rebuilding
 // or storing config in the plugin.
 
@@ -82,13 +82,28 @@ pub fn shared_token_remove() -> Result<()> {
 }
 
 #[command]
+pub fn whoami_cache_get() -> Result<Option<String>> {
+    storage::whoami_cache_get()
+}
+
+#[command]
+pub fn whoami_cache_set(value: String) -> Result<()> {
+    storage::whoami_cache_set(&value)
+}
+
+#[command]
+pub fn whoami_cache_remove() -> Result<()> {
+    storage::whoami_cache_remove()
+}
+
+#[command]
 pub fn get_grace_state(grace_ms: Option<i64>) -> Result<GraceState> {
     let grace = grace_ms.unwrap_or(DEFAULT_GRACE_MS).max(0);
     let now = now_ms();
     let first = match storage::first_seen_get()? {
         Some(v) => v,
         None => {
-            // First boot ever on this machine — record the moment so the
+            // First boot ever on this machine - record the moment so the
             // grace window starts now, not on next launch.
             storage::first_seen_set(now)?;
             now
@@ -103,7 +118,7 @@ pub fn get_grace_state(grace_ms: Option<i64>) -> Result<GraceState> {
 }
 
 // Open the activation URL in the user's default browser. We intentionally
-// don't depend on tauri-plugin-shell here — keeps the dependency tree small
+// don't depend on tauri-plugin-shell here - keeps the dependency tree small
 // and avoids extra capabilities for the host app to allow.
 #[command]
 pub fn open_activation_url(url: String) -> Result<()> {

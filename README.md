@@ -6,7 +6,7 @@ Drop-in device activation + license UI for Tauri 2 apps shipped through [getapps
 - Shared OS keychain entry so multiple apps on the same machine **reuse one license slot**.
 - 1-day grace period for fresh installs: user can use the app immediately; sign-in is enforced after the grace window.
 - Floating sign-in button (bottom-right) while in grace; full-screen overlay once locked.
-- Automatic `whoami` re-check every 30 min — handles "license moved to another device" and "subscription lapsed" without any code in the host app.
+- Automatic `whoami` re-check every 30 min - handles "license moved to another device" and "subscription lapsed" without any code in the host app.
 
 > Backend reference (server-side activation routes, web account UI, billing): see the [getapps.cafe repo](https://github.com/mrleepng/getappscafe).
 
@@ -51,7 +51,7 @@ pub fn run() {
 }
 ```
 
-In your frontend entry (any framework — pure DOM):
+In your frontend entry (any framework - pure DOM):
 ```js
 import { setupAuth } from '@getapps/tauri-plugin-auth';
 
@@ -61,7 +61,7 @@ setupAuth({
 });
 ```
 
-That's it. The plugin auto-mounts its UI into `document.body`. Open the app — you'll see the floating user button bottom-right.
+That's it. The plugin auto-mounts its UI into `document.body`. Open the app - you'll see the floating user button bottom-right.
 
 ### Vanilla JS (no bundler)
 
@@ -75,7 +75,7 @@ If your Tauri app's frontend is plain HTML + JS (no Vite/Webpack/etc.), the bare
      }
    }
    ```
-   The plugin will pick up `window.__TAURI__.core.invoke` automatically — no `@tauri-apps/api` import needed.
+   The plugin will pick up `window.__TAURI__.core.invoke` automatically - no `@tauri-apps/api` import needed.
 
 2. Import the plugin from its actual file path:
    ```html
@@ -95,12 +95,13 @@ If your Tauri app's frontend is plain HTML + JS (no Vite/Webpack/etc.), the bare
 | Situation | Plugin UI | Host app usable? |
 |---|---|---|
 | First boot, no token | Floating user button | ✅ yes, for 24h |
-| Floating button clicked | Full overlay with code + "Re-open activation page". Browser opens at `/activate?code=…` | ❌ blocked while overlaying — user dismiss-able if still in grace |
+| Floating button clicked | Full overlay with code + "Re-open activation page". Browser opens at `/activate?code=…` | ❌ blocked while overlaying - user dismiss-able if still in grace |
 | 24h passed, still no token | Full overlay: "Sign in to continue" | ❌ blocked, no dismiss |
 | Has token, `/whoami` OK | Nothing | ✅ yes |
 | Has token, `/whoami` 401 (revoked) | Returns to grace logic above | depends on grace |
 | Has token, `/whoami` 402 (license expired) | Full overlay: "Trial ended" / "Subscription lapsed" with "Upgrade" | ❌ blocked |
-| Network down during boot | Stays in last good state, surfaces error | unchanged |
+| Has token, network down at boot | Nothing (treated as authenticated, `state.offline = true`); re-verifies on next tick or `online` event | ✅ yes |
+| No token, network down at boot, grace expired | Falls through to locked overlay | ❌ blocked |
 
 ## Sharing the license across multiple apps
 
@@ -110,22 +111,22 @@ The plugin stores the device token in the **OS-level shared credential store**:
 - Windows: Credential Manager (Windows scopes per-user, not per-app).
 - Linux: libsecret schema `cafe.getapps.device`.
 
-### macOS requirements (mandatory — otherwise you get the "enter your Keychain password" dialog)
+### macOS requirements (mandatory - otherwise you get the "enter your Keychain password" dialog)
 
 1. Every host app must be **code-signed with Apple Team ID `VFYA7T675R`**. The plugin hardcodes this Team ID; forks/3rd-party use would need to fork and change `ACCESS_GROUP` in `src/storage_macos.rs`.
 2. Every host app must declare the shared access group in its entitlements. With Tauri, put this in `src-tauri/Entitlements.plist` (or the file referenced by `tauri.conf.json > bundle.macOS.entitlements`):
    ```xml
    <key>keychain-access-groups</key>
    <array>
-     <string>$(AppIdentifierPrefix)cafe.getapps.shared</string>
+     <string>VFYA7T675R.cafe.getapps.shared</string>
    </array>
    ```
-   At code-sign time `$(AppIdentifierPrefix)` expands to `VFYA7T675R.`, giving the full group `VFYA7T675R.cafe.getapps.shared` that the plugin writes to.
+   Use this literal string - the plugin hardcodes `VFYA7T675R.cafe.getapps.shared` as the access group on the read/write side.
 3. Unsigned / ad-hoc-signed builds (the default `cargo tauri dev` output) **cannot** join an access group. You'll see the OS password dialog when a second app tries to read app 1's token. This is expected in development; once both apps ship signed with the same Team ID + entitlement, the dialog goes away.
 
-After activating app A, install app B from the same publisher — it reads the same token, calls `/whoami`, and boots straight into the authenticated state. No browser, no second activation, no extra license slot used (the server unique-keys on `hardware_id`).
+After activating app A, install app B from the same publisher - it reads the same token, calls `/whoami`, and boots straight into the authenticated state. No browser, no second activation, no extra license slot used (the server unique-keys on `hardware_id`).
 
-> **Upgrading from earlier plugin versions**: the macOS backend was switched from the legacy file keychain to DataProtectionKeychain with a shared access group. Existing tokens are not migrated — users will re-activate once on next launch.
+> **Upgrading from earlier plugin versions**: the macOS backend was switched from the legacy file keychain to DataProtectionKeychain with a shared access group. Existing tokens are not migrated - users will re-activate once on next launch.
 
 ## API
 
@@ -140,7 +141,7 @@ After activating app A, install app B from the same publisher — it reads the s
 | `pollTimeoutMs` | `600000` (10m) | Give up on the activation request after this. |
 | `whoamiInterval` | `1800000` (30m) | Periodic license re-check after sign-in. |
 | `mountUi` | `true` | Set to `false` if you want to render your own UI and just consume `state`. |
-| `onChange(state)` | — | Callback on every state change. |
+| `onChange(state)` | - | Callback on every state change. |
 | `upgradeUrl` | derived | Where the "Upgrade" button opens. Defaults to `${apiUrl}/account#/billing`. |
 | `deviceName` | hostname or appName | Sent to the server on `init` so it shows up in `/account`. |
 
@@ -174,7 +175,7 @@ function render(s) {
 }
 ```
 
-The lower-level functions are also re-exported (`getHardwareId`, `initActivation`, `pollActivation`, `whoami`, `getSharedToken`, `setSharedToken`, `removeSharedToken`, `getGraceState`, `openActivationUrl`) — use them directly if you don't want the bundled state machine either.
+The lower-level functions are also re-exported (`getHardwareId`, `initActivation`, `pollActivation`, `whoami`, `getSharedToken`, `setSharedToken`, `removeSharedToken`, `getGraceState`, `openActivationUrl`) - use them directly if you don't want the bundled state machine either.
 
 ## Theming the UI
 
@@ -192,7 +193,3 @@ The injected stylesheet exposes CSS variables on `.gac-host`:
 ```
 
 Override them in your app's stylesheet to match brand colors.
-
-## License
-
-MIT

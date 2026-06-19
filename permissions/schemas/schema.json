@@ -415,10 +415,46 @@
           "markdownDescription": "Denies the whoami command without any pre-configured scope."
         },
         {
-          "description": "Allows the full getapps.cafe activation flow:\n- read hardware id / platform info\n- start an activation and poll for its completion\n- call /whoami with a bearer token\n- read/write/remove the shared device token in the OS keychain\n- read or initialize the grace-period state\n- open the activation URL in the user's default browser\n\n#### This default permission set includes:\n\n- `allow-get-hardware-id`\n- `allow-get-platform-info`\n- `allow-init-activation`\n- `allow-poll-activation`\n- `allow-whoami`\n- `allow-shared-token-get`\n- `allow-shared-token-set`\n- `allow-shared-token-remove`\n- `allow-get-grace-state`\n- `allow-open-activation-url`",
+          "description": "Enables the whoami_cache_get command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-whoami-cache-get",
+          "markdownDescription": "Enables the whoami_cache_get command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the whoami_cache_get command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-whoami-cache-get",
+          "markdownDescription": "Denies the whoami_cache_get command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the whoami_cache_remove command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-whoami-cache-remove",
+          "markdownDescription": "Enables the whoami_cache_remove command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the whoami_cache_remove command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-whoami-cache-remove",
+          "markdownDescription": "Denies the whoami_cache_remove command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the whoami_cache_set command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-whoami-cache-set",
+          "markdownDescription": "Enables the whoami_cache_set command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the whoami_cache_set command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-whoami-cache-set",
+          "markdownDescription": "Denies the whoami_cache_set command without any pre-configured scope."
+        },
+        {
+          "description": "Allows the full getapps.cafe activation flow:\n- read hardware id / platform info\n- start an activation and poll for its completion\n- call /whoami with a bearer token\n- read/write/remove the shared device token in the OS keychain\n- read/write/remove the shared whoami cache (last successful whoami snapshot)\n- read or initialize the grace-period state\n- open the activation URL in the user's default browser\n\n#### This default permission set includes:\n\n- `allow-get-hardware-id`\n- `allow-get-platform-info`\n- `allow-init-activation`\n- `allow-poll-activation`\n- `allow-whoami`\n- `allow-shared-token-get`\n- `allow-shared-token-set`\n- `allow-shared-token-remove`\n- `allow-whoami-cache-get`\n- `allow-whoami-cache-set`\n- `allow-whoami-cache-remove`\n- `allow-get-grace-state`\n- `allow-open-activation-url`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Allows the full getapps.cafe activation flow:\n- read hardware id / platform info\n- start an activation and poll for its completion\n- call /whoami with a bearer token\n- read/write/remove the shared device token in the OS keychain\n- read or initialize the grace-period state\n- open the activation URL in the user's default browser\n\n#### This default permission set includes:\n\n- `allow-get-hardware-id`\n- `allow-get-platform-info`\n- `allow-init-activation`\n- `allow-poll-activation`\n- `allow-whoami`\n- `allow-shared-token-get`\n- `allow-shared-token-set`\n- `allow-shared-token-remove`\n- `allow-get-grace-state`\n- `allow-open-activation-url`"
+          "markdownDescription": "Allows the full getapps.cafe activation flow:\n- read hardware id / platform info\n- start an activation and poll for its completion\n- call /whoami with a bearer token\n- read/write/remove the shared device token in the OS keychain\n- read/write/remove the shared whoami cache (last successful whoami snapshot)\n- read or initialize the grace-period state\n- open the activation URL in the user's default browser\n\n#### This default permission set includes:\n\n- `allow-get-hardware-id`\n- `allow-get-platform-info`\n- `allow-init-activation`\n- `allow-poll-activation`\n- `allow-whoami`\n- `allow-shared-token-get`\n- `allow-shared-token-set`\n- `allow-shared-token-remove`\n- `allow-whoami-cache-get`\n- `allow-whoami-cache-set`\n- `allow-whoami-cache-remove`\n- `allow-get-grace-state`\n- `allow-open-activation-url`"
         }
       ]
     }

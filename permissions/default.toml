@@ -9,6 +9,7 @@ Allows the full getapps.cafe activation flow:
 - start an activation and poll for its completion
 - call /whoami with a bearer token
 - read/write/remove the shared device token in the OS keychain
+- read/write/remove the shared whoami cache (last successful whoami snapshot)
 - read or initialize the grace-period state
 - open the activation URL in the user's default browser
 """
@@ -21,6 +22,9 @@ permissions = [
     "allow-shared-token-get",
     "allow-shared-token-set",
     "allow-shared-token-remove",
+    "allow-whoami-cache-get",
+    "allow-whoami-cache-set",
+    "allow-whoami-cache-remove",
     "allow-get-grace-state",
     "allow-open-activation-url",
 ]

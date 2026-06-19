@@ -9,7 +9,7 @@
 // Linux: libsecret schema. Same service+account = same entry.
 //
 // IMPORTANT: keyring entries persist after uninstall on macOS/Windows. That's
-// usually what you want — the user shouldn't lose their license by removing
+// usually what you want - the user shouldn't lose their license by removing
 // one app. Use `remove()` only on a deliberate sign-out / 401.
 
 #[cfg(target_os = "macos")]
@@ -25,6 +25,7 @@ mod backend {
     const SERVICE: &str = "cafe.getapps.device";
     const ACCOUNT_TOKEN: &str = "device_token";
     const ACCOUNT_FIRST_SEEN: &str = "first_seen_at_ms";
+    const ACCOUNT_WHOAMI_CACHE: &str = "whoami_cache";
 
     fn entry(account: &str) -> Result<Entry> {
         Entry::new(SERVICE, account).map_err(Error::from)
@@ -64,6 +65,26 @@ mod backend {
     pub fn first_seen_set(ms: i64) -> Result<()> {
         entry(ACCOUNT_FIRST_SEEN)?.set_password(&ms.to_string())?;
         Ok(())
+    }
+
+    pub fn whoami_cache_get() -> Result<Option<String>> {
+        match entry(ACCOUNT_WHOAMI_CACHE)?.get_password() {
+            Ok(s) => Ok(Some(s)),
+            Err(keyring::Error::NoEntry) => Ok(None),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    pub fn whoami_cache_set(value: &str) -> Result<()> {
+        entry(ACCOUNT_WHOAMI_CACHE)?.set_password(value)?;
+        Ok(())
+    }
+
+    pub fn whoami_cache_remove() -> Result<()> {
+        match entry(ACCOUNT_WHOAMI_CACHE)?.delete_credential() {
+            Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
+            Err(e) => Err(e.into()),
+        }
     }
 }
 

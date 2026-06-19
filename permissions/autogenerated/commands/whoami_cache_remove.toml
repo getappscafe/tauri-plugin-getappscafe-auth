@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-whoami-cache-remove"
+description = "Enables the whoami_cache_remove command without any pre-configured scope."
+commands.allow = ["whoami_cache_remove"]
+
+[[permission]]
+identifier = "deny-whoami-cache-remove"
+description = "Denies the whoami_cache_remove command without any pre-configured scope."
+commands.deny = ["whoami_cache_remove"]

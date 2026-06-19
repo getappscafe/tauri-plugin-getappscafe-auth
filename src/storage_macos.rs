@@ -22,6 +22,7 @@ use crate::error::{Error, Result};
 const SERVICE: &str = "cafe.getapps.device";
 const ACCOUNT_TOKEN: &str = "device_token";
 const ACCOUNT_FIRST_SEEN: &str = "first_seen_at_ms";
+const ACCOUNT_WHOAMI_CACHE: &str = "whoami_cache";
 const ACCESS_GROUP: &str = "VFYA7T675R.cafe.getapps.shared";
 
 fn map_err(e: SfError) -> Error {
@@ -70,7 +71,7 @@ fn account_set(account: &str, value: &str) -> Result<()> {
     match add.add() {
         Ok(()) => Ok(()),
         Err(e) if e.code() == errSecDuplicateItem => {
-            // Same service+account+access_group already present — update its data.
+            // Same service+account+access_group already present - update its data.
             let mut update = ItemUpdateOptions::new();
             update.set_value(ItemUpdateValue::Data(CFData::from_buffer(value.as_bytes())));
             update_item(&build_search(account), &update).map_err(map_err)
@@ -111,4 +112,16 @@ pub fn first_seen_get() -> Result<Option<i64>> {
 
 pub fn first_seen_set(ms: i64) -> Result<()> {
     account_set(ACCOUNT_FIRST_SEEN, &ms.to_string())
+}
+
+pub fn whoami_cache_get() -> Result<Option<String>> {
+    account_get(ACCOUNT_WHOAMI_CACHE)
+}
+
+pub fn whoami_cache_set(value: &str) -> Result<()> {
+    account_set(ACCOUNT_WHOAMI_CACHE, value)
+}
+
+pub fn whoami_cache_remove() -> Result<()> {
+    account_remove(ACCOUNT_WHOAMI_CACHE)
 }
