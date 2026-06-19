@@ -43,6 +43,14 @@ const DEFAULT_OPTS = {
   onChange: null,
   upgradeUrl: null, // falls back to license.upgrade_url from server
   colors: null,     // optional theme overrides - see README.
+  // Hidden shortcut that opens a read-only info modal (user/device/plan/grace).
+  // Pass a string like 'Mod+Shift+Alt+A' ('Mod' = Cmd on macOS, Ctrl elsewhere),
+  // a custom (KeyboardEvent) => boolean matcher, or null to disable.
+  infoShortcut: 'Mod+Shift+J',
+  // Floating sign-in button position (only used in `grace` phase). Number =
+  // px, string = any CSS length (e.g. '1rem', '2vw', 'calc(20px + env(safe-area-inset-bottom))').
+  right: 20,
+  bottom: 20,
 };
 
 /**
@@ -66,20 +74,33 @@ class Auth {
     this.pollTimer = null;
     this.activationDeadline = 0;
     this.destroyed = false;
+    this.infoOpen = false;
+    this.infoData = null;
+    this._keyHandler = null;
 
     if (opts.mountUi) {
       // Lazy-load UI to keep headless integrations small.
       import('./ui.js').then(({ AuthUI }) => {
         this.ui = new AuthUI({
           colors: opts.colors,
+          apiUrl: opts.apiUrl,
+          fabRight: opts.right,
+          fabBottom: opts.bottom,
           onSignInClick: () => this.startActivation(),
           onCancelActivation: () => this.cancelActivation(),
           onUpgradeClick: () => this.openUpgradeUrl(),
+          onInfoClose: () => this.hideInfo(),
+          onInfoRecheck: () => this.refresh(),
+          onInfoSignOut: () => this.signOut(),
+          onInfoOpenAccount: () => this.openAccountUrl(),
         });
         this.ui.mount();
         this.ui.render(this.state);
+        if (this.infoOpen) this.ui.renderInfo(this.state, this.infoData);
       });
     }
+
+    this._installShortcut();
   }
 
   // --- public API ---------------------------------------------------------
@@ -157,11 +178,107 @@ class Auth {
     });
   }
 
+  openAccountUrl() {
+    const url = `${this.opts.apiUrl.replace(/\/$/, '')}/account`;
+    openActivationUrl(url).catch(() => {
+      this.setState({ error: 'Could not open the account page.' });
+    });
+  }
+
+  async copyHardwareId() {
+    const id = this.infoData?.hardwareId
+      || await getHardwareId().catch(() => null);
+    if (!id) return false;
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(id);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = id; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Force a fresh license check now (bypasses the periodic whoami timer).
+  async refresh() {
+    const token = await getSharedToken().catch(() => null);
+    if (token) {
+      await this.checkWhoami(token);
+    } else {
+      await this.checkGraceAndRender();
+    }
+    if (this.infoOpen) await this._loadInfoData();
+  }
+
+  // --- info modal ---------------------------------------------------------
+
+  async showInfo() {
+    if (this.destroyed) return;
+    this.infoOpen = true;
+    await this._loadInfoData();
+    if (this.ui) this.ui.renderInfo(this.state, this.infoData);
+  }
+
+  hideInfo() {
+    this.infoOpen = false;
+    if (this.ui) this.ui.renderInfo(null, null);
+  }
+
+  toggleInfo() {
+    return this.infoOpen ? this.hideInfo() : this.showInfo();
+  }
+
+  async _loadInfoData() {
+    const [hardwareId, platform, token] = await Promise.all([
+      getHardwareId().catch(() => null),
+      getPlatformInfo().catch(() => null),
+      getSharedToken().catch(() => null),
+    ]);
+    this.infoData = {
+      hardwareId,
+      platform,
+      token, // masked for display in UI
+      loadedAt: Date.now(),
+    };
+  }
+
   destroy() {
     this.destroyed = true;
     this.stopPolling();
+    this._uninstallShortcut();
     if (this.ui) this.ui.unmount();
     this.subs.clear();
+  }
+
+  // --- shortcut -----------------------------------------------------------
+
+  _installShortcut() {
+    const matcher = makeShortcutMatcher(this.opts.infoShortcut);
+    if (!matcher || typeof window === 'undefined') return;
+    this._keyHandler = (e) => {
+      try {
+        if (matcher(e)) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.toggleInfo();
+        }
+      } catch {}
+    };
+    // Capture phase so input fields / app handlers can't swallow it first.
+    window.addEventListener('keydown', this._keyHandler, true);
+  }
+
+  _uninstallShortcut() {
+    if (this._keyHandler && typeof window !== 'undefined') {
+      window.removeEventListener('keydown', this._keyHandler, true);
+    }
+    this._keyHandler = null;
   }
 
   // --- internals ----------------------------------------------------------
@@ -357,7 +474,10 @@ class Auth {
 
   setState(patch) {
     this.state = { ...this.state, ...patch };
-    if (this.ui) this.ui.render(this.state);
+    if (this.ui) {
+      this.ui.render(this.state);
+      if (this.infoOpen) this.ui.renderInfo(this.state, this.infoData);
+    }
     this.subs.forEach((fn) => { try { fn(this.state); } catch {} });
     if (this.opts.onChange) { try { this.opts.onChange(this.state); } catch {} }
   }
@@ -382,4 +502,46 @@ function isNetworkError(e) {
     || msg.includes('timeout')
     || msg.includes('offline')
     || msg.includes('dns');
+}
+
+// Parse a shortcut spec like 'Mod+Shift+Alt+A' into a KeyboardEvent matcher.
+// 'Mod' resolves to Cmd on macOS, Ctrl elsewhere — single token for portability.
+function makeShortcutMatcher(spec) {
+  if (!spec) return null;
+  if (typeof spec === 'function') return spec;
+  if (typeof spec !== 'string') return null;
+  const MOD_TOKENS = ['ctrl', 'control', 'cmd', 'command', 'meta', 'mod', 'shift', 'alt', 'option'];
+  const parts = spec.split('+').map((p) => p.trim().toLowerCase()).filter(Boolean);
+  const need = {
+    ctrl: parts.includes('ctrl') || parts.includes('control'),
+    meta: parts.includes('cmd') || parts.includes('command') || parts.includes('meta'),
+    mod: parts.includes('mod'),
+    shift: parts.includes('shift'),
+    alt: parts.includes('alt') || parts.includes('option'),
+  };
+  const key = parts.find((p) => !MOD_TOKENS.includes(p));
+  const isMac = typeof navigator !== 'undefined'
+    && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || '');
+  return (e) => {
+    if (!!need.shift !== !!e.shiftKey) return false;
+    if (!!need.alt !== !!e.altKey) return false;
+    if (need.mod) {
+      if (isMac ? !e.metaKey : !e.ctrlKey) return false;
+    } else {
+      if (!!need.ctrl !== !!e.ctrlKey) return false;
+      if (!!need.meta !== !!e.metaKey) return false;
+    }
+    if (key) {
+      // Use e.code for letters/digits so Alt-as-modifier on macOS (which
+      // remaps e.key to glyphs like 'å') doesn't break matching.
+      if (/^[a-z]$/.test(key)) {
+        if (e.code !== `Key${key.toUpperCase()}`) return false;
+      } else if (/^[0-9]$/.test(key)) {
+        if (e.code !== `Digit${key}` && e.code !== `Numpad${key}`) return false;
+      } else {
+        if ((e.key || '').toLowerCase() !== key) return false;
+      }
+    }
+    return true;
+  };
 }

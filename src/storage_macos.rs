@@ -7,7 +7,8 @@
 // from the same Apple Team share the item silently. Apps must:
 //   1. Be signed with Team ID VFYA7T675R, and
 //   2. Declare `<key>keychain-access-groups</key>` containing
-//      `$(AppIdentifierPrefix)cafe.getapps.shared` in their entitlements.
+//      `VFYA7T675R.cafe.getapps.shared` in their entitlements (hardcoded,
+//      not `$(AppIdentifierPrefix)…`, so it matches `ACCESS_GROUP` below).
 
 use core_foundation::data::CFData;
 use security_framework::base::Error as SfError;

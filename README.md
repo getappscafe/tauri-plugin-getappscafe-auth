@@ -15,12 +15,15 @@ Drop-in device activation + license UI for Tauri 2 apps shipped through [getapps
 In the Tauri app's `src-tauri/Cargo.toml`:
 ```toml
 [dependencies]
-tauri-plugin-getappscafe-auth = { git = "https://github.com/3aesala/tauri-plugin-getappscafe-auth" }
+tauri-plugin-getappscafe-auth = "0.1"
 ```
+
+(Or pin against the GitHub repo if you need the unreleased tip:
+`{ git = "https://github.com/getappscafe/tauri-plugin-getappscafe-auth" }`.)
 
 In the app's `package.json`:
 ```bash
-npm install github:3aesala/tauri-plugin-getappscafe-auth
+npm install github:getappscafe/tauri-plugin-getappscafe-auth
 # or `pnpm add` / `yarn add`
 ```
 
@@ -144,6 +147,9 @@ After activating app A, install app B from the same publisher - it reads the sam
 | `onChange(state)` | - | Callback on every state change. |
 | `upgradeUrl` | derived | Where the "Upgrade" button opens. Defaults to `${apiUrl}/account#/billing`. |
 | `deviceName` | hostname or appName | Sent to the server on `init` so it shows up in `/account`. |
+| `infoShortcut` | `'Mod+Shift+Alt+A'` | Hidden shortcut that opens a read-only info modal (user / device / plan / grace). `'Mod'` is Cmd on macOS, Ctrl elsewhere. Set to `null` to disable, or pass a `(KeyboardEvent) => boolean` matcher. |
+| `right` | `20` | Floating sign-in button offset from the right edge. Number = px, string = any CSS length (e.g. `'1rem'`, `'calc(20px + env(safe-area-inset-right))'`). |
+| `bottom` | `20` | Floating sign-in button offset from the bottom edge. Same semantics as `right`. |
 
 ### `Auth` instance
 
@@ -156,8 +162,18 @@ await auth.startActivation();   // force start the flow (= clicking the floating
 auth.cancelActivation();        // only effective if still in grace
 await auth.signOut();           // clear shared token, fall back to grace
 auth.openUpgradeUrl();          // open billing page
+auth.openAccountUrl();          // open account page
+await auth.refresh();           // force a whoami / grace re-check now
+await auth.showInfo();          // open the hidden info modal (also: hideInfo / toggleInfo)
+await auth.copyHardwareId();    // copy hardware id to clipboard
 auth.destroy();                 // unmount UI, clear timers
 ```
+
+### Open account info modal
+
+Press **Cmd/Ctrl + Shift + J** to open a read-only modal with the current user, device, plan, grace window, and stored token (masked). The modal also exposes "Re-check now", "Copy hardware ID", "Open account page", and "Sign out" — useful for support, QA, or letting power users check their state without leaving the app.
+
+The shortcut works in every phase (including `authenticated` when no other UI is visible). Disable with `infoShortcut: null`, or override with `infoShortcut: 'Mod+Shift+F12'` / a custom matcher function.
 
 ### State shape
 

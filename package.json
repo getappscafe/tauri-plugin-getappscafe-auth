@@ -31,7 +31,7 @@
     "license",
     "getapps"
   ],
-  "repository": "https://github.com/3aesala/tauri-plugin-getappscafe-auth",
+  "repository": "https://github.com/getappscafe/tauri-plugin-getappscafe-auth",
   "publishConfig": {
     "access": "public"
   }

@@ -79,6 +79,8 @@ export interface AuthColors {
   radiusSm?: string;
 }
 
+export type ShortcutMatcher = (event: KeyboardEvent) => boolean;
+
 export interface SetupOptions {
   apiUrl?: string;
   appName: string;
@@ -90,6 +92,24 @@ export interface SetupOptions {
   upgradeUrl?: string | null;
   deviceName?: string;
   colors?: AuthColors;
+  /**
+   * Hidden shortcut that opens a read-only info modal showing the current
+   * user / device / plan / grace state. Defaults to 'Mod+Shift+Alt+A'
+   * (Cmd on macOS, Ctrl elsewhere). Pass `null` to disable, or a custom
+   * KeyboardEvent matcher.
+   */
+  infoShortcut?: string | ShortcutMatcher | null;
+  /**
+   * Floating sign-in button offset from the right edge of the viewport
+   * (used in the `grace` phase). Number = pixels, string = any CSS length
+   * (e.g. '1rem', 'calc(20px + env(safe-area-inset-right))'). Default 20.
+   */
+  right?: number | string;
+  /**
+   * Floating sign-in button offset from the bottom edge of the viewport.
+   * Same value semantics as `right`. Default 20.
+   */
+  bottom?: number | string;
 }
 
 export interface Auth {
@@ -99,6 +119,14 @@ export interface Auth {
   cancelActivation(): void;
   signOut(): Promise<void>;
   openUpgradeUrl(): void;
+  openAccountUrl(): void;
+  /** Force an immediate whoami / grace re-check (bypasses the periodic timer). */
+  refresh(): Promise<void>;
+  /** Open the hidden info modal. Also triggered by `infoShortcut`. */
+  showInfo(): Promise<void>;
+  hideInfo(): void;
+  toggleInfo(): Promise<void> | void;
+  copyHardwareId(): Promise<boolean>;
   destroy(): void;
 }
 
