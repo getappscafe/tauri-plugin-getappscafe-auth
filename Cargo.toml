@@ -1,6 +1,7 @@
 [package]
 name = "tauri-plugin-getappscafe-auth"
 version = "0.1.7"
+publish = false
 edition = "2021"
 license = "MIT"
 description = "Drop-in device-activation flow for Tauri apps that ship under the getapps.cafe license."
