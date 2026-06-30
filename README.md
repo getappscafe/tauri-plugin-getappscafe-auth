@@ -16,7 +16,7 @@ Drop-in device activation + license UI for Tauri 2 apps shipped through [getapps
 In the Tauri app's `src-tauri/Cargo.toml`:
 ```toml
 [dependencies]
-tauri-plugin-getappscafe-auth = "0.1"
+tauri-plugin-getappscafe-auth = { git = "https://github.com/getappscafe/tauri-plugin-getappscafe-auth.git", tag = "v0.1.7" }
 ```
 
 (Or pin against the GitHub repo if you need the unreleased tip:
