@@ -19,8 +19,7 @@ In the Tauri app's `src-tauri/Cargo.toml`:
 tauri-plugin-getappscafe-auth = { git = "https://github.com/getappscafe/tauri-plugin-getappscafe-auth.git", tag = "v0.1.7" }
 ```
 
-(Or pin against the GitHub repo if you need the unreleased tip:
-`{ git = "https://github.com/getappscafe/tauri-plugin-getappscafe-auth" }`.)
+(Not published on crates.io - distribution is git-tag only. Bump the `tag` to adopt a new release.)
 
 In the app's `package.json`:
 ```bash
